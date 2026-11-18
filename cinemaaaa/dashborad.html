@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - La La Cine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">La La <span>Cine - Admin</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Ver Site</a></li>
+                <li><a href="dashborad.html" class="active">Painel Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container ingresso-container">
+        <div class="ingresso-card">
+            <div class="modal-header">
+                <h2>Cadastrar Novo Filme</h2>
+                <p>Adicione um filme para exibi-lo automaticamente no site</p>
+            </div>
+
+            <form id="formFilme" class="cadastro-form">
+                <div class="input-group">
+                    <label for="titulo">Título do Filme</label>
+                    <input type="text" id="titulo" placeholder="Ex: Vingadores" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="genero">Gênero e Duração</label>
+                    <input type="text" id="genero" placeholder="Ex: Ação • 2 horas e 30 min" required>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="formato">Formato</label>
+                        <select id="formato" required>
+                            <option value="2D">2D</option>
+                            <option value="3D">3D</option>
+                            <option value="IMAX">IMAX</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="imagem">Caminho da Imagem</label>
+                        <input type="text" id="imagem" placeholder="Ex: imagens/spiderman.jpg" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Salvar Filme</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('formFilme').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const filme = {
+                titulo: document.getElementById('titulo').value,
+                genero: document.getElementById('genero').value,
+                formato: document.getElementById('formato').value,
+                duracao: "Calculado", // Simplificado
+                imagem: document.getElementById('imagem').value
+            };
+
+            try {
+                const resposta = await fetch('http://localhost:5000/api/movie', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(filme)
+                });
+
+                if (resposta.ok) {
+                    alert('Filme cadastrado com sucesso!');
+                    document.getElementById('formFilme').reset();
+                } else {
+                    alert('Erro ao cadastrar filme.');
+                }
+            } catch (erro) {
+                console.error('Erro:', erro);
+                alert('Erro de conexão com a API.');
+            }
+        });
+    </script>
+</body>
+</html>

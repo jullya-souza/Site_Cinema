@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprar Ingressos - La La Cine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">La La <span>Cine</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Filmes em Cartaz</a></li>
+                <li><a href="index.html#cadastro">Cadastro</a></li>
+                <li><a href="ingressos.html" class="active">Ingressos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container ingresso-container">
+        <div class="ingresso-card">
+            <div class="modal-header">
+                <h2>Garantir Ingresso</h2>
+                <p>Escolha o filme, a sessão e finalize sua reserva no <span>La La Cine</span></p>
+            </div>
+
+            <form id="formIngressos" class="cadastro-form">
+                <div class="input-group">
+                    <label for="filme">Selecione o Filme</label>
+                    <select id="filme" name="filme" required>
+                        <option value="" disabled selected>Escolha um filme em cartaz...</option>
+                        <option value="Homem-Aranha no Aranhaverso">Homem-Aranha no Aranhaverso</option>
+                        <option value="Pecadores">Pecadores (IMAX)</option>
+                        <option value="Duna: Parte Três">Duna: Parte Três (2D)</option>
+                        <option value="Garfield: Fora de Casa">Garfield: Fora de Casa (3D)</option>
+                        <option value="Resident Evil">Resident Evil (2D)</option>
+                        <option value="Orgulho e Preconceito">Orgulho e Preconceito (IMAX)</option>
+                        <option value="Nós">Nós (3D)</option>
+                        <option value="O Diabo Veste Prada">O Diabo Veste Prada (2D)</option>
+                        <option value="Harry Potter e as Relíquias da Morte: Parte 1">Harry Potter e as Relíquias da Morte: Parte 1 (IMAX)</option>
+                    </select>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="horario">Horário da Sessão</label>
+                        <select id="horario" name="horario" required>
+                            <option value="" disabled selected>Selecione o horário...</option>
+                            <option value="14:00">14:00 - Sala 1</option>
+                            <option value="16:30">16:30 - Sala 2</option>
+                            <option value="19:15">19:15 - Sala IMAX</option>
+                            <option value="21:45">21:45 - Sala VIP</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="quantidade">Quantidade de Ingressos</label>
+                        <input type="number" id="quantidade" name="quantidade" min="1" max="10" value="1" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="emailUsuario">E-mail do Usuário</label>
+                    <input type="email" id="emailUsuario" name="emailUsuario" placeholder="seuemail@exemplo.com" required>
+                </div>
+
+                <div class="resumo-valor">
+                    <span>Valor unitário: R$ 30,00</span>
+                    <strong id="valorTotal">Total: R$ 30,00</strong>
+                </div>
+
+                <button type="submit" class="btn-submit">Confirmar Compra</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; Todos os direitos reservados</p>
+    </footer>
+
+    
+    <script>
+    // 1. Buscar filmes da API para preencher o <select> dinamicamente
+    async function carregarOpcoesFilmes() {
+        try {
+            const resposta = await fetch('http://localhost:5000/api/movie');
+            const filmes = await resposta.json();
+            const selectFilme = document.getElementById('filme');
+
+            // Adiciona os filmes vindos do banco de dados ao select
+            filmes.forEach(filme => {
+                // Evita duplicar se já estiver no HTML estático
+                const existe = Array.from(selectFilme.options).some(opt => opt.value === filme.titulo);
+                if (!existe) {
+                    const option = document.createElement('option');
+                    option.value = filme.titulo;
+                    option.textContent = `${filme.titulo} (${filme.formato})`;
+                    selectFilme.appendChild(option);
+                }
+            });
+
+            // 2. Se o usuário veio clicando em "Comprar Ingresso" em um card, seleciona ele automaticamente
+            const params = new URLSearchParams(window.location.search);
+            const filmeSelecionado = params.get('filme');
+            if (filmeSelecionado) {
+                selectFilme.value = filmeSelecionado;
+            }
+        } catch (erro) {
+            console.error("Erro ao carregar opções de filmes:", erro);
+        }
+    }
+
+    // Executa ao carregar a página
+    carregarOpcoesFilmes();
+
+    // 3. Atualiza o valor total conforme a quantidade de ingressos muda
+    const inputQtd = document.getElementById('quantidade');
+    const textoTotal = document.getElementById('valorTotal');
+    const precoIngresso = 30.00;
+
+    inputQtd.addEventListener('input', () => {
+        const qtd = parseInt(inputQtd.value) || 0;
+        const total = (qtd * precoIngresso).toFixed(2).replace('.', ',');
+        textoTotal.textContent = `Total: R$ ${total}`;
+    });
+
+    // 4. Envio do formulário de compra para a API
+    document.getElementById('formIngressos').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const ingresso = {
+            filme: document.getElementById('filme').value,
+            horario: document.getElementById('horario').value,
+            quantidade: parseInt(document.getElementById('quantidade').value),
+            emailUsuario: document.getElementById('emailUsuario').value
+        };
+
+        try {
+            const resposta = await fetch('http://localhost:5000/api/ticket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ingresso)
+            });
+
+            if (resposta.ok) {
+                const resultado = await resposta.json();
+                alert(`Ingresso(s) comprado(s) com sucesso! Total pago: R$ ${resultado.total}`);
+                window.location.href = 'index.html';
+            } else {
+                alert('Erro ao processar a compra do ingresso.');
+            }
+        } catch (erro) {
+            console.error('Erro de conexão:', erro);
+            alert('Não foi possível conectar à API.');
+        }
+    });
+</script>
+
+</body>
+</html>
